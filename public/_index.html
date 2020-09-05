@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    video {
+      width: 300px;
+      border-radius: 15px;
+    }
+    #contenedor-video-local {
+      border: 1px solid blue;
+      border-radius: 15px;
+      padding: 10px;
+    }
+    #contenedor-video-remoto {
+      border: 1px solid green;
+      border-radius: 15px;
+      padding: 10px;
+    }
+    .contenedores-videos {
+      display: inline-block;
+      width: 40%;
+    }
+  </style>
+  <script src="https://rtcmulticonnection.herokuapp.com/dist/RTCMultiConnection.min.js"></script>
+  <script src="https://rtcmulticonnection.herokuapp.com/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+  <input type="text" id="texto-room-id">
+
+  <button id="btn-open-or-join-room">
+    Abrir o unirse
+  </button>
+
+  <hr>
+  <div>
+    <div id="contenedor-video-local" class="contenedores-videos">
+    </div>
+    
+    <div id="contenedor-video-remoto" class="contenedores-videos">
+    </div>
+  </div>
+  <script>
+    var connection = new RTCMultiConnection();
+
+    // this line is VERY_important
+    connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+
+    // if you want audio+video conferencing
+    connection.session = {
+        audio: true,
+        video: true
+    };
+
+    connection.sdpConstraints.mandatory = {
+      OfferToReceiveAudio: true,
+      OfferToReceiveVideo: true
+    }
+
+    var contenedorVideoLocal = document.getElementById('contenedor-video-local')
+    var contenedorVideoRemoto = document.getElementById('contenedor-video-remoto')
+    connection.onstream = function (event) {
+      var video = event.mediaElement
+
+      if (event.type === "local") {
+        contenedorVideoLocal.appendChild(video)
+      }
+
+      if (event.type === "remote") {
+        contenedorVideoRemoto.appendChild(video)
+      }
+
+    }
+
+    var roomid = document.getElementById('texto-room-id')
+    roomid.value = connection.token()
+
+    document.getElementById('btn-open-or-join-room').onclick = function () {
+      this.disabled = true
+      connection.openOrJoin(roomid.value || 'your-room-id-asd123f');
+    }
+
+  </script>
+</body>
+</html>
