@@ -39,7 +39,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            'throttle:800,1',
+            'throttle:60,1',
             'bindings',
             \Barryvdh\Cors\HandleCors::class,
         ],
@@ -63,7 +63,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'cors' => \Barryvdh\Cors\HandleCors::class,
-        'CheckApiToken' => \App\Http\Middleware\CheckApiToken::class,
+        'jwt.verify' => \App\Http\Middleware\JWT::class,
     ];
 
     /**
@@ -74,7 +74,6 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middlewarePriority = [
-        \App\Http\Middleware\CheckApiToken::class,
         \Illuminate\Session\Middleware\StartSession::class,
         \Illuminate\View\Middleware\ShareErrorsFromSession::class,
         \App\Http\Middleware\Authenticate::class,

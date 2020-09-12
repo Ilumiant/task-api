@@ -2,15 +2,15 @@
 
 namespace App;
 
+use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Passport\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
-    use Notifiable, HasApiTokens, SoftDeletes;
+    use Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -38,16 +38,21 @@ class User extends Authenticatable
         return $this->role->name == "admin";
     }
 
-    public function vehicle() {
-        return $this->hasOne(Vehicle::class)->withTrashed();
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
     }
 
-    public function hcrDocuments() {
-        return $this->hasMany(HcrDocument::class);
-    }
-
-    public function ongoingCall() {
-        return $this->hasOne(OngoingCall::class);
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims()
+    {
+        return [
+            "user" => ["id" => $this->id]
+        ];
     }
 
 }

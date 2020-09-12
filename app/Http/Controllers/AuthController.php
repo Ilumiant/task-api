@@ -1,90 +1,84 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\User;
-use App\Invitation;
-use Carbon\Carbon;
-use Carbon\CarbonTimeZone;
-use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
-    public function signup(Request $request, $token)
+    /**
+     * Create a new AuthController instance.
+     *
+     * @return void
+     */
+    public function __construct()
     {
-        $request->validate([
-            'email'    => 'required|string|email|unique:users,email,NULL,id,deleted_at,NULL',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
-
-        if ($invitation = Invitation::where('token', $token)->first()) {
-            if ($invitation->email == $request->input("email")) {
-                $user = new User([
-                    'email'    => $request->email,
-                    'password' => bcrypt($request->password),
-                    'role_id' => $invitation->role_id
-                ]);
-                $user->save();
-                $invitation->delete();
-                return response()->json(['message' => 'Usuario creado satisfactoriamente!'], 201);
-            }
-            return Response::json([
-                'message' => "Acceso prohibido",
-                'error' => 'El email introducido para este token no es válido'
-            ], 403);
-        }
-        return Response::json([
-            'message' => "Recurso no encontrado",
-            'error' => 'El token ingresado no existe',
-            "token" => $token
-        ], 404);
-        
+        $this->middleware('jwt.verify', ['except' => ['login']]);
     }
-    public function login(Request $request)
+
+    /**
+     * Get a JWT via given credentials.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function login()
     {
-        $request->validate([
-            'email'       => 'required|string|email',
-            'password'    => 'required|string|min:6',
-            'remember_me' => 'boolean',
-        ]);
         $credentials = request(['email', 'password']);
-        if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'message' => 'Unauthorized'], 401);
+
+        if (! $token = auth()->attempt($credentials, ['exp' => Carbon::now()->addDays(7)->timestamp])) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
-        $user = $request->user();
-        $user->role;
-        $user->vehicle;
 
-        $tokenResult = $user->createToken('Personal Access Token');
-        $token = $tokenResult->token;
-        // if ($request->remember_me) {
-            // $token->expires_at = Carbon::now()->addWeeks(1);
-            $token->expires_at = new Carbon('tomorrow');
-        // }
-        $token->save();
+        return $this->respondWithToken($token);
+    }
+
+    /**
+     * Get the authenticated User.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function me()
+    {
+        return response()->json(auth()->user());
+    }
+
+    /**
+     * Log the user out (Invalidate the token).
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout()
+    {
+        auth()->logout();
+
+        return response()->json(['message' => 'Successfully logged out']);
+    }
+
+    /**
+     * Refresh a token.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refresh()
+    {
+        return $this->respondWithToken(auth()->refresh());
+    }
+
+    /**
+     * Get the token array structure.
+     *
+     * @param  string $token
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function respondWithToken($token)
+    {
         return response()->json([
-            'user' => $user,
-            'access_token' => $tokenResult->accessToken,
-            'token_type'   => 'Bearer',
-            'expires_at'   => Carbon::parse(
-                $tokenResult->token->expires_at)
-                    ->toDateTimeString(),
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth()->factory()->getTTL() * 60
         ]);
-    }
-
-    public function logout(Request $request)
-    {
-        $request->user()->token()->revoke();
-        return response()->json(['message' => 
-            'Sesión cerrada satisfactoriamente']);
-    }
-
-    public function user(Request $request)
-    {
-        $user = $request->user();
-        $user->role;
-        return response()->json($user);
     }
 }
