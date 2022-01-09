@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Comment;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CommentController extends Controller
 {
@@ -37,7 +38,7 @@ class CommentController extends Controller
         $data['post_id'] = $request->input('post_id');
 
         $comment = Comment::create($data);
-        return response()->json(['message' => "Post '{$comment->text}' creado satisfactoriamente!"], 201);
+        return response()->json(['message' => "Comentario '{$comment->text}' creado satisfactoriamente!"], 201);
     }
 
     /**
@@ -64,11 +65,17 @@ class CommentController extends Controller
             'text' => ['required'],
         ]);
 
+        if ($comment->user_id != $request->user->id) {
+          throw ValidationException::withMessages([
+              'message' => "El comentario solo puede ser editado por el usuario '" . $comment->user->name ."'"
+          ]);
+        }
+
         $comment->update([
             'text' => $request->input('text')
         ]);
 
-        return response()->json(['message' => "Post '{$comment->text}' actulizado satisfactoriamente!"], 200);
+        return response()->json(['message' => "Comentario '{$comment->text}' actulizado satisfactoriamente!"], 200);
     }
 
     /**
@@ -80,6 +87,6 @@ class CommentController extends Controller
     public function destroy(Comment $comment)
     {
         $comment->delete();
-        return response()->json(['message' => "Post '{$comment->text}' eliminado satisfactoriamente!"]);
+        return response()->json(['message' => "Comentario '{$comment->text}' eliminado satisfactoriamente!"]);
     }
 }

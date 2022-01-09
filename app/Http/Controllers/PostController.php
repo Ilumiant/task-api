@@ -6,6 +6,7 @@ use App\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class PostController extends Controller
 {
@@ -71,6 +72,12 @@ class PostController extends Controller
             'text' => ['required'],
             'image' => ['image'],
         ]);
+
+        if ($post->user_id != $request->user->id) {
+          throw ValidationException::withMessages([
+              'message' => "El post solo puede ser editado por el usuario '" . $post->user->name ."'"
+          ]);
+        }
 
         $data = [];
         $data['text'] = $request->input('text');
