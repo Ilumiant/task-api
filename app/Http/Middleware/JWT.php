@@ -2,10 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\User;
 use Closure;
 use JWTAuth;
     use Exception;
-    use Tymon\JWTAuth\Http\Middleware\BaseMiddleware;
+use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\Http\Middleware\BaseMiddleware;
 
 class JWT extends BaseMiddleware
 {
@@ -20,6 +22,8 @@ class JWT extends BaseMiddleware
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
+            Log::info(["user" => $user->id]);
+            $request->user = User::find($user->id);
         } catch (Exception $e) {
             if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException){
                 return response()->json(['message' => 'El token es inválido, inicie sesión nuevamente']);

@@ -41,5 +41,18 @@ Route::group(['prefix' => 'v1', 'middleware' => 'cors'], function () {
         Route::post('logout', 'AuthController@logout');
         Route::post('refresh', 'AuthController@refresh');
         Route::get('me', 'AuthController@me');
+
+        Route::get('comments', 'CommentController@index');
+        Route::post('comments', 'CommentController@store');
+        Route::get('comments/{comment}', 'CommentController@show');
+        Route::put('comments/{comment}', 'CommentController@update');
+        Route::delete('comments/{comment}', 'CommentController@destroy');
+
+        Route::get('posts', 'PostController@index');
+        Route::post('posts', 'PostController@store');
+        Route::get('posts/{post}', 'PostController@show');
+        Route::post('posts/{post}', 'PostController@update');
+        Route::delete('posts/{post}', 'PostController@destroy');
+
     });
 });
