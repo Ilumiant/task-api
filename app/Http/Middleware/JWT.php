@@ -26,11 +26,11 @@ class JWT extends BaseMiddleware
             $request->user = User::find($user->id);
         } catch (Exception $e) {
             if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException){
-                return response()->json(['message' => 'El token es inválido, inicie sesión nuevamente']);
+                return response()->json(['message' => 'El token es inválido, inicie sesión nuevamente'], 401);
             }else if ($e instanceof \Tymon\JWTAuth\Exceptions\TokenExpiredException){
-                return response()->json(['message' => 'El token ha expirado, inicie sesión nuevamente']);
+                return response()->json(['message' => 'El token ha expirado, inicie sesión nuevamente'], 401);
             }else{
-                return response()->json(['message' => 'La petición no tiene cabecera de autorización']);
+                return response()->json(['message' => 'La petición no tiene cabecera de autorización'], 401);
             }
         }
         return $next($request);
